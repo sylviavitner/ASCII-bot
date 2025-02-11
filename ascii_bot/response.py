@@ -1,7 +1,7 @@
-from random import choice
 from discord import Message
 import os.path
 import getpass
+import datetime # for printing the current date
 
 # Attendance tracking state
 attendance_tracking = {
@@ -9,7 +9,7 @@ attendance_tracking = {
     "attendees": set()  # A set to store  usernames
 }
 
-# Function to report the attendance after a set of attendess has been collected
+# Save the attendance in a file on the users desktop
 async def report_attendance(attendees, message: Message):
     # Use getpass to get the username of the device
     user = getpass.getuser()
@@ -36,6 +36,12 @@ async def report_attendance(attendees, message: Message):
     with open(file_path, "a") as file:
         if add_newline:
             file.write("\n")
+
+            # Get the current date and time and format it
+            now = datetime.datetime.now()
+            formatted_date = now.strftime("%m-%d-%Y %H:%M:%S")
+            file.write(f"Attendance recorded at {formatted_date}\n") 
+            
         for attendee in attendees:
             file.write(attendee + "\n")
 
