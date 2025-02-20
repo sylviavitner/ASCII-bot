@@ -3,29 +3,38 @@ import os
 from dotenv import load_dotenv
 from discord import Intents, Client, Message
 from response import get_response
+from database import Database
 
 # Load token from env file
 load_dotenv()
 TOKEN: Final[str] = os.getenv('DISCORD_TOKEN')
 
-# BOT SETUP
+# Initialize db connection
+try:
+    db = Database()
+except Exception as e:
+    print(f"Database connection failed: {e}")
+    exit() 
+
+# Bot setup
 intents: Intents = Intents.default()
 intents.message_content = True
+intents.members = True # enable member intents for discord id
 client: Client = Client(intents=intents)
 
 # Send message functionality
-async def send_message(message: Message, user_message: str) -> None:
+async def send_message(message: Message, user_message: str, db: Database) -> None:
     if not user_message:
-        print('(Message was empty because intents were not enabled properly)')
+        print('Message was empty because intents were not enabled properly')
         return
-    
-    # send private messages by starting with '?'
+
     if is_private := user_message[0] == '?':
         user_message = user_message[1:]
 
     try:
-        response: str = await get_response(user_message, message)
-        await message.author.send(response) if is_private else await message.channel.send(response)
+        response: str = await get_response(user_message, message, db)
+        if response:
+            await message.author.send(response) if is_private else await message.channel.send(response)
     except Exception as e:
         print(e)
 
@@ -46,9 +55,14 @@ async def on_message(message: Message) -> None:
     channel: str = str(message.channel)
 
     print(f'[{channel}] {username}: "{user_message}"')
-    await send_message(message, user_message)
+    await send_message(message, user_message, db)
 
-# MAIN ENTRY POINT
+@client.event
+async def on_close():
+    print("Closing database connection.")
+    del db # calls __del__ method and closes connection
+
+# Main entry point
 def main() -> None:
     client.run(TOKEN)
 
