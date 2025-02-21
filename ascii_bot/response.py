@@ -51,7 +51,7 @@ async def report_attendance(attendees, message: discord.Message, db: Database):
     await message.channel.send(f"Attendance report saved successfully.")
 
 # Respond to user messages about attendance
-async def get_response(user_input: str, message: discord.Message, db: Database) -> str:
+async def get_response(user_input: str, message: discord.Message, db: Database, client: discord.Client) -> str:
     global attendance_tracking
 
     lowered: str = user_input.lower()
@@ -65,12 +65,6 @@ async def get_response(user_input: str, message: discord.Message, db: Database) 
         return "Attendance counting started! Type 'here' to mark yourself present."
 
     # "Here" command
-    # TODO: Need to implement checking the database for the discord id (primary key)
-    # If it is not found, the bot needs to DM the user and say: "Hi, please enter your appstate id (the first part of your email before the @)"
-    # In case of a typo, the bot should say the id back, and have the user type Y to confirm
-    # Then, the appstate id should be inserted into the database so the bot never has to ask again
-    # Add their appstate id to the set of ids to report
-    # If it is found, the appstate id of the discord user is added to a set of ids in the report
     elif lowered == "here":
         if attendance_tracking["is_counting"]:
             discord_id = str(message.author.id)
@@ -82,14 +76,9 @@ async def get_response(user_input: str, message: discord.Message, db: Database) 
                 return f"{user.name} has been marked present! Total: {len(attendance_tracking['attendees'])}"
             # Get user information and store it
             else:
-                print("User not in database. Sending DM...")  # test print statement.
-                return await get_app_id_from_dm(message, db)
+                print("User not in database. Sending DM...")  # test print statement
+                return await get_app_id_from_dm(message, db, client)
         return "Attendance counting is not active. Use 'start attendance' to start."
-
-    elif lowered == "save attendance":
-        # ... (save attendance command - pass db to report_attendance)
-        await report_attendance(attendance_tracking["attendees"], message, db)
-        return f"Total attendees: {len(attendance_tracking['attendees'])}"
 
     # Stop counting and report attendance
     elif lowered == "save attendance":
@@ -105,27 +94,28 @@ async def get_response(user_input: str, message: discord.Message, db: Database) 
     else:
         return None
 
-# Get the app id from user DMs and store it in the db
-async def get_app_id_from_dm(message: discord.Message, db: Database):
-    print("get_app_id_from_dm called.")
-
+# Get the App ID from user DMs and store it in the db
+async def get_app_id_from_dm(message: discord.Message, db: Database, client: discord.Client):
     try:
         if not message.author.dm_channel:
             await message.author.create_dm()
 
-        print(f"message.author.dm_channel: {message.author.dm_channel}")
+        # Prompt for app id
+        await message.author.dm_channel.send("Please enter your App State id (the part of your email before the @)")
 
-        await message.author.dm_channel.send("Please enter your appstate id.")
-
+        # Check for the correct user and dm channel
         def check(m):
-            return m.author == message.author and m.channel == message.author.dm_channel
+            return m.author == message.author and isinstance(m.channel, discord.DMChannel)
         
-        app_id_message = await message.guild.get_member(message.author.id).guild.client.wait_for('message', check=check, timeout=30.0) # Corrected line here.
+        # Store the next message in the dm channel from the user
+        app_id_message = await client.wait_for('message', check=check, timeout=30.0) 
         app_id = app_id_message.content
 
+        # Confirm response
         await message.author.dm_channel.send(f"Is this your app ID? {app_id} (Type 'Y' to confirm, anything else to cancel)")
-        confirmation = await message.guild.get_member(message.author.id).guild.client.wait_for('message', check=check, timeout=30.0) # Corrected line here.
+        confirmation = await client.wait_for('message', check=check, timeout=30.0)
 
+        # Insert into db if accepted
         if confirmation.content.upper() == 'Y':
             if db.insert_data(str(message.author.id), message.author.name, app_id):
                 await message.author.dm_channel.send("Thank you! Your app ID has been recorded.")
@@ -134,8 +124,8 @@ async def get_app_id_from_dm(message: discord.Message, db: Database):
                 await message.author.dm_channel.send("There was an error saving your app ID. Please try again.")
                 return None
         else:
-            await message.author.dm_channel.send("App ID entry cancelled.")
-            return None
+            # Prompt again
+            return await get_app_id_from_dm(message, db, client)
 
     except TimeoutError:
         await message.author.dm_channel.send("You took too long to respond.")
