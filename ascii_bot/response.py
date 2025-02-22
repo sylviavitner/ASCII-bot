@@ -10,40 +10,24 @@ attendance_tracking = {
     "attendees": set()  # A set to store  usernames
 }
 
-# TODO: Change reporting attendance so it creates a folder named "ascii_attendance" if there isn't one
-# Each time attendance is saved, a new file is created and stored in this folder named Attendance [Day's Date]
-# Attendees should still be written to the file from the set of that day's attendance. Their appstate id should be on the file.
+# Create attendance report and store in the attendance folder
 async def report_attendance(attendees, message: discord.Message, db: Database):
-    # Use getpass to get the device user
+    # Use getpass to get the desktop path
     user = getpass.getuser()
-    file_path = f'C:/Users/{user}/Desktop/attendance.txt'
+    desktop_path = f'C:/Users/{user}/Desktop'
 
-    # Make sure the path exists
-    directory = os.path.dirname(file_path)
-    if not os.path.exists(directory):
-        print("Directory not found.")
-        return
+    # Make sure the folder exists. If not, create it
+    attendance_folder = os.path.join(desktop_path, "Ascii_Attendance")
+    os.makedirs(attendance_folder, exist_ok=True)
 
-    # Check if the file exists, if not create one
-    if not os.path.exists(file_path):
-        with open(file_path, "w") as file:
-            file.write("")
+    # Create a new file based on the current date
+    date = datetime.datetime.today().strftime("%Y-%m-%d")
+    file_path = os.path.join(attendance_folder, f"Attendance-{date}.txt")
 
-    # Check if the file is empty or not
-    add_newline = False
-    with open(file_path, "r") as file:
-        if file.read().strip() != "":
-            add_newline = True
-
-    # Add newline if necessary and add attendees to report
+    # Add attendees app ids to report
     with open(file_path, "a") as file:
-        if add_newline:
-            file.write("\n")
 
-        # Get the current date and time and format it
-        now = datetime.datetime.now()
-        date_time = now.strftime("%m-%d-%Y %H:%M:%S")
-        file.write(f"Attendance recorded at {date_time}\n")
+        file.write(f"ASCII Attendance for {date}:\n")
 
         for app_id in attendees:
             file.write(f"{app_id}\n")
@@ -74,18 +58,20 @@ async def get_response(user_input: str, message: discord.Message, db: Database, 
             if app_id:
                 attendance_tracking["attendees"].add(app_id)
                 return f"{user.name} has been marked present! Total: {len(attendance_tracking['attendees'])}"
-            # Get user information and store it
+            # Get user information if not in the db
             else:
                 print("User not in database. Sending DM...")  # test print statement
-                return await get_app_id_from_dm(message, db, client)
-        return "Attendance counting is not active. Use 'start attendance' to start."
+                app_id = await get_app_id_from_dm(message, db, client)
+                attendance_tracking["attendees"].add(app_id)
+                return f"{user.name} has been marked present! Total: {len(attendance_tracking['attendees'])}"
+        return None # Changed to say nothing if tracking isn't active
 
     # Stop counting and report attendance
     elif lowered == "save attendance":
         if not attendance_tracking["is_counting"]:
             return "Attendance counting is not active."
         attendance_tracking["is_counting"] = False
-        attendees_list = "\n".join(attendance_tracking["attendees"])
+        #attendees_list = "\n".join(attendance_tracking["attendees"]) no longer needed
         await report_attendance(attendance_tracking["attendees"], message, db)
 
         return f"Total attendees: {len(attendance_tracking['attendees'])}"
