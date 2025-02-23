@@ -1,5 +1,5 @@
 # ASCII Attendance Bot
-ASCII bot tracks attendance for club meetings by collecting student IDs. It allows users to mark themselves as present and maintains the data in a MySQL database to avoid repeatedly asking for user information.
+ASCII bot tracks attendance for club meetings by collecting student IDs. It allows users to mark themselves as present and maintains the data in a MySQL database to avoid repeatedly asking for user information and create a more efficient attendance process. 
 
 ---
 ## 💡 Features
