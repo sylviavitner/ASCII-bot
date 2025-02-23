@@ -68,7 +68,8 @@ async def get_response(user_input: str, message: discord.Message, db: Database, 
                 print("User not in database. Sending DM...")  # test print statement
                 app_id = await get_app_id_from_dm(message, db, client)
                 attendance_tracking["attendees"].add(app_id)
-                return f"{user.name} has been marked present! Total: {len(attendance_tracking['attendees'])}"
+                if app_id:  # check again to make sure they were actually added.
+                    return f"{user.name} has been marked present! Total: {len(attendance_tracking['attendees'])}"
         return None # Changed to say nothing if tracking isn't active
 
     # Stop counting and report attendance
@@ -103,16 +104,16 @@ async def get_app_id_from_dm(message: discord.Message, db: Database, client: dis
         app_id = app_id_message.content
 
         # Confirm response
-        await message.author.dm_channel.send(f"Is this your app ID? {app_id} (Type 'Y' to confirm, anything else to cancel)")
+        await message.author.dm_channel.send(f"Is this your App ID? (Type 'Y' to confirm, anything else to cancel)\n{app_id}")
         confirmation = await client.wait_for('message', check=check, timeout=30.0)
 
         # Insert into db if accepted
         if confirmation.content.upper() == 'Y':
             if db.insert_data(str(message.author.id), message.author.name, app_id):
-                await message.author.dm_channel.send("Thank you! Your app ID has been recorded.")
+                await message.author.dm_channel.send("Thank you! Your attendance been recorded.")
                 return app_id
             else:
-                await message.author.dm_channel.send("There was an error saving your app ID. Please try again.")
+                await message.author.dm_channel.send("There was an error saving your App ID. Please try again.")
                 return None
         else:
             # Prompt again
