@@ -27,10 +27,12 @@ async def report_attendance(attendees, message: discord.Message, db: Database):
     # Add attendees app ids to report
     with open(file_path, "a") as file:
 
-        file.write(f"ASCII Attendance for {date}:\n")
+        file.write(f"ASCII Attendance {date}:\n\n")
 
         for app_id in attendees:
-            file.write(f"{app_id}\n")
+            file.write(f"{app_id}@appstate.edu\n") # added the rest of email
+        
+        file.write(f"\nTotal: {len(attendance_tracking["attendees"])}")
 
     await message.channel.send(f"Attendance report saved successfully.")
 
@@ -54,10 +56,13 @@ async def get_response(user_input: str, message: discord.Message, db: Database, 
             discord_id = str(message.author.id)
             user = message.author
             app_id = db.get_app_id(discord_id)
+            # Return if the app_id is already in attendees 
+            if (app_id in attendance_tracking["attendees"]):
+                return None
             # Add the user if the id exists in the db
             if app_id:
                 attendance_tracking["attendees"].add(app_id)
-                return f"{user.name} has been marked present! Total: {len(attendance_tracking['attendees'])}"
+                return f"{user.name} has been marked present! Total: {len(attendance_tracking["attendees"])}"
             # Get user information if not in the db
             else:
                 print("User not in database. Sending DM...")  # test print statement
