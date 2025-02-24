@@ -31,7 +31,8 @@ Before running the bot you will need:
 - Make sure you have met the requirements
 - Clone this repository: ```git clone https://github.com/sylviavitner/ASCII-bot.git```
 - cd ASCII-bot
-- Copy the bot token from your Discord bot and at it to the environment variables (DISCORD_TOKEN="your-token")
+- Copy the bot token from your Discord bot and add it to the environment variables (DISCORD_TOKEN="your-token")
+- Add your MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, and MYSQL_DATABASE to the environment variables.
 - Run the program (python main.py)
 
 ---
