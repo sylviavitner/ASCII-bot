@@ -93,7 +93,7 @@ async def get_app_id_from_dm(message: discord.Message, db: Database, client: dis
             await message.author.create_dm()
 
         # Prompt for app id
-        await message.author.dm_channel.send("Please enter your App State id (the part of your email before the @)")
+        await message.author.dm_channel.send("Please enter your App State username (the part of your email before the @)") # changed to username
 
         # Check for the correct user and dm channel
         def check(m):
@@ -104,7 +104,7 @@ async def get_app_id_from_dm(message: discord.Message, db: Database, client: dis
         app_id = app_id_message.content
 
         # Confirm response
-        await message.author.dm_channel.send(f"Is this your App ID? (Type 'Y' to confirm, anything else to cancel)\n{app_id}")
+        await message.author.dm_channel.send(f"Is this your username? (Type 'Y' to confirm, anything else to cancel)\n{app_id}")
         confirmation = await client.wait_for('message', check=check, timeout=30.0)
 
         # Insert into db if accepted
@@ -113,7 +113,7 @@ async def get_app_id_from_dm(message: discord.Message, db: Database, client: dis
                 await message.author.dm_channel.send("Thank you! Your attendance been recorded.")
                 return app_id
             else:
-                await message.author.dm_channel.send("There was an error saving your App ID. Please try again.")
+                await message.author.dm_channel.send("There was an error saving your username. Please try again.")
                 return None
         else:
             # Prompt again
