@@ -32,7 +32,7 @@ async def report_attendance(attendees, message: discord.Message, db: Database):
         for app_id in attendees:
             file.write(f"{app_id}@appstate.edu\n") # added the rest of email
         
-        file.write(f"\nTotal: {len(attendance_tracking["attendees"])}")
+        file.write(f"\nTotal: {len(attendance_tracking['attendees'])}")
 
     await message.channel.send(f"Attendance report saved successfully.")
 
@@ -62,7 +62,7 @@ async def get_response(user_input: str, message: discord.Message, db: Database, 
             # Add the user if the id exists in the db
             if app_id:
                 attendance_tracking["attendees"].add(app_id)
-                return f"{user.name} has been marked present! Total: {len(attendance_tracking["attendees"])}"
+                return f"{user.name} has been marked present! Total: {len(attendance_tracking['attendees'])}"
             # Get user information if not in the db
             else:
                 print("User not in database. Sending DM...")  # test print statement
@@ -101,7 +101,7 @@ async def get_app_id_from_dm(message: discord.Message, db: Database, client: dis
         
         # Store the next message in the dm channel from the user
         app_id_message = await client.wait_for('message', check=check, timeout=30.0) 
-        app_id = app_id_message.content
+        app_id = app_id_message.content.lower() # lowercase
 
         # Confirm response
         await message.author.dm_channel.send(f"Is this your username? (Type 'Y' to confirm, anything else to cancel)\n{app_id}")
