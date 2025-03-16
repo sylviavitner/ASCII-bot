@@ -6,7 +6,7 @@ ASCII bot tracks attendance for club meetings by collecting student IDs. It allo
 - Type 'start attendance' to begin tracking
 - Users type 'here' to mark themselves as present
 - If a user is not in the database, the bot will DM them and ask for their App State ID.
-- Attendance is saved in a folder called 'Ascii_Attendance' on the desktop, with reports named by date
+- Attendance is saved in a folder called 'Ascii_Attendance' on the desktop, with reports by date
 - Attendance reports store App State IDs, the date, and total number of attendees.
   
 ---
@@ -19,11 +19,11 @@ Before running the bot you will need:
 - mysql.connector installed (pip install mysql-connector-python)
 - MySQL installed with a database containing the following table:
 
-| Column Name | Data Type     | Description                                |
-|-------------|---------------|--------------------------------------------|
-| discord_id  | BIGINT        | Stores Discord IDs (Primary Key)           |
-| username    | VARCHAR(50)   | Stores Discord usernames                   |
-| app_id      | VARCHAR(50)   | Stores App State IDs (Unique)              |
+| Column Name      | Data Type     | Description                                |
+|------------------|---------------|--------------------------------------------|
+| discord_id       | BIGINT        | Stores Discord IDs (Primary Key)           |
+| discord_username | VARCHAR(50)   | Stores Discord usernames                   |
+| app_id           | VARCHAR(50)   | Stores App State IDs (Unique)              |
 
 
 ---
