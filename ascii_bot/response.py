@@ -100,17 +100,17 @@ async def get_app_id_from_dm(message: discord.Message, db: Database, client: dis
             return m.author == message.author and isinstance(m.channel, discord.DMChannel)
         
         # Store the next message in the dm channel from the user
-        app_id_message = await client.wait_for('message', check=check, timeout=30.0) 
+        app_id_message = await client.wait_for('message', check=check, timeout=60.0) # Changed timeout to 60
         app_id = app_id_message.content.lower() # lowercase
 
         # Confirm response
         await message.author.dm_channel.send(f"Is this your username? (Type 'Y' to confirm, anything else to cancel)\n{app_id}")
-        confirmation = await client.wait_for('message', check=check, timeout=30.0)
+        confirmation = await client.wait_for('message', check=check, timeout=60.0) # Change timeout to 60
 
         # Insert into db if accepted
         if confirmation.content.upper() == 'Y':
             if db.insert_data(str(message.author.id), message.author.name, app_id):
-                await message.author.dm_channel.send("Thank you! Your attendance been recorded.")
+                await message.author.dm_channel.send("Thank you! Your attendance has been recorded.")
                 return app_id
             else:
                 await message.author.dm_channel.send("There was an error saving your username. Please try again.")
@@ -119,6 +119,7 @@ async def get_app_id_from_dm(message: discord.Message, db: Database, client: dis
             # Prompt again
             return await get_app_id_from_dm(message, db, client)
 
+    # Instead of returning None the exception restarts the prompt when the user times out.
     except TimeoutError:
-        await message.author.dm_channel.send("You took too long to respond.")
-        return None
+        await message.author.dm_channel.send("Your response took too much time.")
+        return await get_app_id_from_dm(message, db, client) # Instead of returning none, prompt
